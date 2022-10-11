@@ -1,0 +1,389 @@
+---
+title: "PROCESSOS - PROPLAN"
+author: Asplan
+universit: Universidade Federal de Sergipe
+output: 
+  flexdashboard::flex_dashboard:
+    logo: logo.png
+    favicon: ufs.png
+    orientation: rows # columns, rows
+    vertical_layout: fill # scroll, fill
+    social: menu # ["Twitter", "facebook", "linkedin", "whatsapp", "telegram"]
+    navbar:
+     # - { title: "Sobre Mim", href: "https://proplan.ufs.br/pagina/98", align: right }
+      - { icon: fa-address-card, href: "https://proplan.ufs.br/pagina/98", align: right }
+    source_code: embed # COMPARTILHAR CÓDIGOS COM OUTRAS PESSOAS
+    #theme: united
+    theme:
+      #bg: "black" # "#FDF7F7" # "#101010" (PLANO DE FUNDO)
+      #fg: "white" # "white" , "#FDF7F7" , "#2F4F4F" # COR DA LETRA (PIRMEIRO PLANO)
+      #primary: "#483D8B" # "#000000" , "#ED79F9" , "#3ADAC6" # ONDE FICA O TITULO
+      navbar-bg: "#000000" # "#3ADAC6" # COR DA PARTE INTERNA DAS INFORMAÇÕES
+      base_font: "Times New Roman"
+        #google: "Merriweather" # "Sree Krushnadevaraya", "Prompt", "Newsreader" 
+      heading_font: "Times New Roman" # LETRA DO TÍTULO E AUTHOR
+        #google: Sen
+      code_font: "Times New Roman"
+        #google: "Merriweather" # "Newsreader", "JetBrains Mono"
+      font-size-base: "0.90rem"
+      version: 4
+      bootswatch: cerulean # minty, cerulean, united, cosmo, spacelab, bootstrap, paper, lumen, journal, sandstone, yeti
+    #  fontsize: 12pt
+    
+          
+runtime: shiny # shiny, shinyrmd
+---
+
+```{r setup, include=FALSE, context = "server"}
+library(flexdashboard)
+library(rmarkdown)
+library(htmlTable)
+library(htmltools)
+library(markdown)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+#library(xlsx)
+library(readr)
+library(readxl)
+library(DT)
+library(knitr)
+library(shiny)
+library(dashboardthemes)
+library(shinydashboard)
+library(shinydashboardPlus)
+library(purrr)
+library(fontawesome) # colocar icones nos títulos das abas
+library(rbokeh)
+library(bslib)
+library(plotly)
+library(htmlwidgets)
+library(digest)
+library(bit)
+#library(bubbles)
+library(bubblyr)
+
+# library(thematic) # alterar tamática
+
+# bslib::bs_themer() # CUSTOMIZAR O TEMA DO DASHBOARD
+# thematic::thematic_rmd(font = "auto")
+
+
+# SETEMBRO:
+
+tramitacao_set <- read_excel("(PROPLAN) Controle de Processos 2022.xlsx", 
+                             sheet = "SETEMBRO-2022", skip = 2)
+
+tramitacao_set$`MES` <- as.factor(9)
+tramitacao_set$`ANO` <- "2022"
+
+tramitacao_set <- as.data.frame(tramitacao_set)
+tramitacao_set <- tramitacao_set[!is.na(tramitacao_set[,1]),]
+
+tramitacao_set[,1] <- as.factor(tramitacao_set[,1])
+tramitacao_set[,13] <- as.factor(tramitacao_set[,13])
+
+tramitacao_set[,14] <- difftime(tramitacao_set[,10], as.Date(tramitacao_set[,2]), units = "days")-tramitacao_set[,9]
+
+tramitacao_set <- tramitacao_set %>% arrange(tramitacao_set, tramitacao_set[,14])
+
+
+#tramitacao_set <- select(tramitacao_set, "MES", "ANO", `NÚMERO DO PROCESSO (SIPAC/SEI!)`:`TEMPO DO PROCESSO NO SETOR (DIAS)`)
+
+
+# colocando NAs nos dados faltantes de destino:
+tramitacao_set$`LOCAL DE DESTINO` <- as.character(tramitacao_set$`LOCAL DE DESTINO`)
+
+tramitacao_set$`LOCAL DE DESTINO`[is.na(tramitacao_set$`LOCAL DE DESTINO`)] <- "NA"
+
+tramitacao_set$`LOCAL DE DESTINO` <- as.factor(tramitacao_set$`LOCAL DE DESTINO`)
+
+
+# colocando zero (0) no lugar nos missings de duração no setor:
+tramitacao_set$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_set$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- as.Date("2022-09-30")-as.Date(tramitacao_set$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
+
+#glimpse(tramitacao_set)
+#----------------------------------------------------------------------------#
+
+# OUTUBRO:
+tramitacao_out <- read_excel("(PROPLAN) Controle de Processos 2022.xlsx", 
+                             sheet = "OUTUBRO-2022", skip = 2)
+
+tramitacao_out$`MES` <- as.factor(10)
+tramitacao_out$`ANO` <- "2022"
+
+tramitacao_out <- as.data.frame(tramitacao_out)
+tramitacao_out <- tramitacao_out[!is.na(tramitacao_out[,1]),]
+
+tramitacao_out[,1] <- as.factor(tramitacao_out[,1])
+tramitacao_out[,13] <- as.factor(tramitacao_out[,13])
+
+tramitacao_out[,14] <- difftime(tramitacao_out[,10], as.Date(tramitacao_out[,2]), units = "days")-tramitacao_out[,9]
+
+tramitacao_out <- tramitacao_out %>% arrange(tramitacao_out, tramitacao_out[,14])
+
+
+#tramitacao_out <- select(tramitacao_out, "MES", "ANO", `NÚMERO DO PROCESSO (SIPAC/SEI!)`:`TEMPO DO PROCESSO NO SETOR (DIAS)`)
+
+
+# colocando NAs nos dados faltantes de destino:
+tramitacao_out$`LOCAL DE DESTINO` <- as.character(tramitacao_out$`LOCAL DE DESTINO`)
+
+tramitacao_out$`LOCAL DE DESTINO`[is.na(tramitacao_out$`LOCAL DE DESTINO`)] <- "NA"
+
+tramitacao_out$`LOCAL DE DESTINO` <- as.factor(tramitacao_out$`LOCAL DE DESTINO`)
+
+
+# colocando zero (0) no lugar nos missings de duração no setor, depois alterar para o fechamento do mes:
+tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- Sys.Date()-as.Date(tramitacao_out$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
+
+#Sys.Date()
+
+
+#------------------------------------------------------------------------------------#
+
+# NOVEMBRO:
+
+tramitacao_nov <- read_excel("(PROPLAN) Controle de Processos 2022.xlsx", 
+                             sheet = "NOVEMBRO-2022", skip = 2)
+
+tramitacao_nov$`MES` <- as.factor(11)
+tramitacao_nov$`ANO` <- "2022"
+
+tramitacao_nov <- as.data.frame(tramitacao_nov)
+tramitacao_nov <- tramitacao_nov[!is.na(tramitacao_nov[,1]),]
+
+tramitacao_nov[,1] <- as.factor(tramitacao_nov[,1])
+tramitacao_nov[,13] <- as.factor(tramitacao_nov[,13])
+
+tramitacao_nov[,14] <- difftime(tramitacao_nov[,10], as.Date(tramitacao_nov[,2]), units = "days")-tramitacao_nov[,9]
+
+tramitacao_nov <- tramitacao_nov %>% arrange(tramitacao_nov, tramitacao_nov[,14])
+
+
+# colocando NAs nos dados faltantes de destino:
+tramitacao_nov$`LOCAL DE DESTINO` <- as.character(tramitacao_nov$`LOCAL DE DESTINO`)
+
+tramitacao_nov$`LOCAL DE DESTINO`[is.na(tramitacao_nov$`LOCAL DE DESTINO`)] <- "NA"
+
+tramitacao_nov$`LOCAL DE DESTINO` <- as.factor(tramitacao_nov$`LOCAL DE DESTINO`)
+
+
+# colocando zero (0) no lugar nos missings de duração no setor, depois alterar para o fechamento do mes:
+tramitacao_nov$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_nov$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- as.Date("2022-11-30")-as.Date(tramitacao_nov$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
+
+
+#--------------------------------------------------------------------------------#
+
+# DEZEMBRO:
+
+tramitacao_dez <- read_excel("(PROPLAN) Controle de Processos 2022.xlsx", 
+                             sheet = "DEZEMBRO-2022", skip = 2)
+
+tramitacao_dez$`MES` <- as.factor(12)
+tramitacao_dez$`ANO` <- "2022"
+
+tramitacao_dez <- as.data.frame(tramitacao_dez)
+tramitacao_dez <- tramitacao_dez[!is.na(tramitacao_dez[,1]),]
+
+tramitacao_dez[,1] <- as.factor(tramitacao_dez[,1])
+tramitacao_dez[,13] <- as.factor(tramitacao_dez[,13])
+
+tramitacao_dez[,14] <- difftime(tramitacao_dez[,10], as.Date(tramitacao_dez[,2]), units = "days")-tramitacao_dez[,9]
+
+tramitacao_dez <- tramitacao_dez %>% arrange(tramitacao_dez, tramitacao_dez[,14])
+
+
+# colocando NAs nos dados faltantes de destino:
+tramitacao_dez$`LOCAL DE DESTINO` <- as.character(tramitacao_dez$`LOCAL DE DESTINO`)
+
+tramitacao_dez$`LOCAL DE DESTINO`[is.na(tramitacao_dez$`LOCAL DE DESTINO`)] <- "NA"
+
+tramitacao_dez$`LOCAL DE DESTINO` <- as.factor(tramitacao_dez$`LOCAL DE DESTINO`)
+
+
+# colocando zero (0) no lugar nos missings de duração no setor, depois alterar para o fechamento do mes:
+tramitacao_dez$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_dez$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- as.Date("2022-12-31")-as.Date(tramitacao_dez$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
+
+
+#------------------------------------------------------------------------------------#
+
+# JANEIRO:
+
+
+
+#----------------------------------------------------------#
+# JUNTAR BASE DE DADOS:
+tramitacao <- tramitacao_set %>% full_join(tramitacao_out)
+
+
+# colocar os setores
+a <- tramitacao %>% select(`LOCAL DE ORIGEM`) %>% distinct()
+
+b <- tramitacao[!is.na(tramitacao$`LOCAL DE DESTINO`),] %>% 
+  select(`LOCAL DE DESTINO`) %>% 
+  distinct()
+
+(table_periodo <- full_join(a, b, by = c("LOCAL DE ORIGEM"="LOCAL DE DESTINO")))
+
+table_periodo <- rename(table_periodo, "setor" = "LOCAL DE ORIGEM")
+(table_periodo$dias <- c(1:as.numeric(count(table_periodo))))
+
+table_periodo <- table_periodo %>% arrange(setor)
+
+
+```
+
+# ACOMPANHAMENTO {data-icon="fa-table" data-navmenu="ANÁLISES"}
+
+## Colmn {.sidebar}
+
+```{r}
+#sidebarSearchForm(textId = "searchText", buttonId = "searchButton", label = "Search...", icon = shiny::icon("search"))
+```
+
+```{r}
+selectInput(inputId = "setor",
+            label = "LOCAL DE DESTINO:", 
+            choices = unique(table_periodo$setor),
+            selected = "NA")
+
+sliderInput("dias", "DIAS:", value = 50, min = 0, max = 100)
+
+```
+
+```{r}
+month_list <- as.list(1:12) %>%
+  set_names(month.name)
+  
+month_list$`All Year` <- 99
+
+selectInput(
+  inputId = "month",
+  label = "Month:",
+  choices = month_list,
+  selected = 99,
+  size = 13,
+  selectize = FALSE
+  )
+```
+
+```{r}
+library(shiny)
+library(flexdashboard)
+
+renderValueBox({
+total <- tramitacao %>% select(MES) %>% filter(input$month == MES)
+
+valueBox(count(total), "Recebidos", 
+         icon = icon("list"), 
+         color = "blue")
+  })
+
+```
+
+
+## Colmn {data-width=1000}
+
+### Processos
+```{r}
+renderTable({
+tramitacao %>% filter(`LOCAL DE DESTINO` == input$setor, `TEMPO DO PROCESSO NO SETOR (DIAS)` <= input$dias, `MES` == input$month) %>% 
+    select(`NÚMERO DO PROCESSO (SIPAC/SEI!)`, `LOCAL DE ORIGEM`, `ASSUNTO DETALHADO (SIPAC / SEI!)`, `MOTIVO DO SOBRESTAMENTO`, `TEMPO DE SOBRESTAMENTO (DIAS)`, `DESPACHO / AÇÃO DE ENCAMINHAMENTO (RESUMIDO)`, `LOCAL DE DESTINO`, `TEMPO DO PROCESSO NO SETOR (DIAS)`)
+
+})
+
+#tramitacao_set %>% filter(`LOCAL DE DESTINO` == input$setor, `TEMPO DO PROCESSO NO SETOR (DIAS)` <= input$dias)
+
+```
+
+
+# TODOS OS PROCESSOS {data-icon="fa-table" data-navmenu="ANÁLISES"}
+```{r}
+## Colmn {.sidebar}
+
+#sidebarSearchForm(textId = "searchText", buttonId = tramitacao$`LOCAL DE DESTINO`, label = "Search...", icon = shiny::icon("search"))
+```
+
+## Colmn {.sidebar data-width=150}
+```{r}
+## Row {.sidebar data-width=150}
+
+missing <- tramitacao %>% filter(`LOCAL DE DESTINO` == "NA")
+progresso <- tramitacao %>% filter(`LOCAL DE DESTINO` != "NA")
+
+library(shiny)
+library(flexdashboard)
+
+valueBox(count(missing), "Processos à Enviar", icon = icon("credit-card"), color = "red")
+
+valueBox(count(progresso), "Enviados", icon = icon("thumbs-up", lib = "glyphicon"), color = "green")
+
+valueBox(count(tramitacao), "Recebidos", icon = icon("list"), color = "blue")
+
+
+#icon = icon("credit-card"), color = "red"
+
+```
+
+
+## Colmn {data-width=1000}
+```{r}
+## Row {data-width=950}
+
+library(shiny)
+library(DT)
+
+movimentacao <- tramitacao
+
+movimentacao$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)` <- as.character.Date(movimentacao$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
+
+movimentacao$`DATA DE ENCAMINHAMENTO (SAÍDA)` <- as.character.Date(movimentacao$`DATA DE ENCAMINHAMENTO (SAÍDA)`)
+
+movimentacao <- movimentacao %>% 
+  select(MES, ANO, `NÚMERO DO PROCESSO (SIPAC/SEI!)`:`TEMPO DO PROCESSO NO SETOR (DIAS)`)
+
+
+DT::renderDataTable({
+  DT::datatable(movimentacao, 
+                editable = 'cell',
+                options = list(
+                  searching = TRUE,
+                  pageLength = 1000,
+                  lengthMenu = 1000)
+                ) %>% 
+    formatStyle('LOCAL DE DESTINO', color = 'red', fontWeight = 'bold')
+})
+
+```
+
+
+# FIGURAS {data-table=row data-icon="fa-chart-line" data-navmenu="GRÁFICOS"}
+
+```{r}
+## Colmn {.sidebar}
+
+#todos <- as.list(1:78) %>% set_names()
+
+#todos$`TODOS` <- 79
+
+#todos <- as.list(todos)
+
+#selectInput(inputId = "processo", label = "PROCESSOS:", choices = unique(todos$`TODOS`), selected = 79, size = 13, selectize = FALSE)
+```
+
+## Colmn {data-width=1000}
+
+### Processos Pendentes
+```{r}
+renderPlotly({
+#tramitacao %>% filter(`NÚMERO DO PROCESSO (SIPAC/SEI!)` == input$processo) %>% 
+  
+grafico <- ggplot(tramitacao, 
+                  aes(x=MES, y=`TEMPO DO PROCESSO NO SETOR (DIAS)`, color = `NÚMERO DO PROCESSO (SIPAC/SEI!)`)) + 
+  geom_point()
+
+ggplotly(grafico)
+
+})
+```

@@ -1,0 +1,7 @@
+192.168.3.105
+
+rmarkdown::run("TRAMITACAO.Rmd", shiny_args = list(host = "192.168.3.105", port = 2345))
+
+
+
+https://github.com/wilasfarias/PROCESSOS.git
