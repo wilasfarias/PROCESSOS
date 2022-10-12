@@ -2,6 +2,7 @@
 title: "PROCESSOS - PROPLAN"
 author: Asplan
 universit: Universidade Federal de Sergipe
+runtime: shiny # shiny, shinyrmd
 output: 
   flexdashboard::flex_dashboard:
     logo: logo.png
@@ -15,10 +16,10 @@ output:
     source_code: embed # COMPARTILHAR CÓDIGOS COM OUTRAS PESSOAS
     #theme: united
     theme:
-      #bg: "black" # "#FDF7F7" # "#101010" (PLANO DE FUNDO)
-      #fg: "white" # "white" , "#FDF7F7" , "#2F4F4F" # COR DA LETRA (PIRMEIRO PLANO)
-      #primary: "#483D8B" # "#000000" , "#ED79F9" , "#3ADAC6" # ONDE FICA O TITULO
-      navbar-bg: "#000000" # "#3ADAC6" # COR DA PARTE INTERNA DAS INFORMAÇÕES
+      bg: "white" # "#FDF7F7" # "#101010" (PLANO DE FUNDO)
+      fg: "black" # "white" , "#FDF7F7" , "#2F4F4F" # COR DA LETRA (PIRMEIRO PLANO)
+      primary: "#000099" #"#000099", "#000000", "#ED79F9", "#3ADAC6" # ONDE FICA O TITULO
+      navbar-bg: "#006400" # "#3ADAC6" # COR DA PARTE INTERNA DAS INFORMAÇÕES
       base_font: "Times New Roman"
         #google: "Merriweather" # "Sree Krushnadevaraya", "Prompt", "Newsreader" 
       heading_font: "Times New Roman" # LETRA DO TÍTULO E AUTHOR
@@ -27,11 +28,11 @@ output:
         #google: "Merriweather" # "Newsreader", "JetBrains Mono"
       font-size-base: "0.90rem"
       version: 4
-      bootswatch: cerulean # minty, cerulean, united, cosmo, spacelab, bootstrap, paper, lumen, journal, sandstone, yeti
+      bootswatch: simplex # minty, cerulean, united, cosmo, spacelab, bootstrap, paper, lumen, journal, sandstone, yeti, simplex
     #  fontsize: 12pt
     
           
-runtime: shiny # shiny, shinyrmd
+
 ---
 
 ```{r setup, include=FALSE, context = "server"}
@@ -234,11 +235,14 @@ table_periodo <- table_periodo %>% arrange(setor)
 
 ```
 
-# ACOMPANHAMENTO {data-icon="fa-table" data-navmenu="ANÁLISES"}
+# ACOMPANHAMENTO {data-icon="fa-table"}
 
 ## Colmn {.sidebar}
 
 ```{r}
+# agrupar dados em uma tela
+# ACOMPANHAMENTO {data-icon="fa-table" data-navmenu="ANÁLISES"}
+
 #sidebarSearchForm(textId = "searchText", buttonId = "searchButton", label = "Search...", icon = shiny::icon("search"))
 ```
 
@@ -277,7 +281,7 @@ total <- tramitacao %>% select(MES) %>% filter(input$month == MES)
 
 valueBox(count(total), "Recebidos", 
          icon = icon("list"), 
-         color = "blue")
+         color = "black")
   })
 
 ```
@@ -298,8 +302,11 @@ tramitacao %>% filter(`LOCAL DE DESTINO` == input$setor, `TEMPO DO PROCESSO NO S
 ```
 
 
-# TODOS OS PROCESSOS {data-icon="fa-table" data-navmenu="ANÁLISES"}
+# TODOS OS PROCESSOS {data-icon="fa-table"}
 ```{r}
+# agrupar dados em uma tela
+# TODOS OS PROCESSOS {data-icon="fa-table" data-navmenu="ANÁLISES"}
+
 ## Colmn {.sidebar}
 
 #sidebarSearchForm(textId = "searchText", buttonId = tramitacao$`LOCAL DE DESTINO`, label = "Search...", icon = shiny::icon("search"))
@@ -358,9 +365,12 @@ DT::renderDataTable({
 ```
 
 
-# FIGURAS {data-table=row data-icon="fa-chart-line" data-navmenu="GRÁFICOS"}
+# FIGURAS {data-table=row data-icon="fa-chart-line"}
 
 ```{r}
+# agrupar dados em uma tela
+# FIGURAS {data-table=row data-icon="fa-chart-line" data-navmenu="GRÁFICOS"}
+
 ## Colmn {.sidebar}
 
 #todos <- as.list(1:78) %>% set_names()
@@ -380,7 +390,7 @@ renderPlotly({
 #tramitacao %>% filter(`NÚMERO DO PROCESSO (SIPAC/SEI!)` == input$processo) %>% 
   
 grafico <- ggplot(tramitacao, 
-                  aes(x=MES, y=`TEMPO DO PROCESSO NO SETOR (DIAS)`, color = `NÚMERO DO PROCESSO (SIPAC/SEI!)`)) + 
+                  aes(x=`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`, y=`TEMPO DO PROCESSO NO SETOR (DIAS)`, color = `NÚMERO DO PROCESSO (SIPAC/SEI!)`)) + 
   geom_point()
 
 ggplotly(grafico)
