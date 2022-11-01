@@ -1,13 +1,13 @@
 ---
 title: "PROCESSOS - PROPLAN"
 author: Asplan
-universit: Universidade Federal de Sergipe
 runtime: shiny # shiny, shinyrmd
 output: 
   flexdashboard::flex_dashboard:
+    storyboard: true    # colocar mapa no dashboard
     logo: logo.png
     favicon: ufs.png
-    orientation: rows # columns, rows
+    orientation: columns # columns, rows
     vertical_layout: fill # scroll, fill
     social: menu # ["Twitter", "facebook", "linkedin", "whatsapp", "telegram"]
     navbar:
@@ -16,27 +16,25 @@ output:
     source_code: embed # COMPARTILHAR CÓDIGOS COM OUTRAS PESSOAS
     #theme: united
     theme:
-      bg: "white" # "#FDF7F7" # "#101010" (PLANO DE FUNDO)
-      fg: "black" # "white" , "#FDF7F7" , "#2F4F4F" # COR DA LETRA (PIRMEIRO PLANO)
+      bg: "#363636" # "#FDF7F7" # "#101010" (PLANO DE FUNDO)
+      fg: "#eee" # "white" , "#FDF7F7" , "#2F4F4F" # COR DA LETRA (PIRMEIRO PLANO)
       primary: "#000099" #"#000099", "#000000", "#ED79F9", "#3ADAC6" # ONDE FICA O TITULO
       navbar-bg: "#006400" # "#3ADAC6" # COR DA PARTE INTERNA DAS INFORMAÇÕES
-      base_font: "Times New Roman"
-        #google: "Merriweather" # "Sree Krushnadevaraya", "Prompt", "Newsreader" 
-      heading_font: "Times New Roman" # LETRA DO TÍTULO E AUTHOR
-        #google: Sen
-      code_font: "Times New Roman"
-        #google: "Merriweather" # "Newsreader", "JetBrains Mono"
+      base_font: 
+        google: Ubuntu #"Merriweather" # "Sree Krushnadevaraya", "Prompt", "Newsreader", "Times New Roman"
+      heading_font:
+        google: Ubuntu
+      code_font: 
+        google: Ubuntu # "Merriweather" # "Newsreader", "JetBrains Mono" "Times New Roman"
       font-size-base: "0.90rem"
       version: 4
-      bootswatch: simplex # minty, cerulean, united, cosmo, spacelab, bootstrap, paper, lumen, journal, sandstone, yeti, simplex
-    #  fontsize: 12pt
-    
-          
-
 ---
 
-```{r setup, include=FALSE, context = "server"}
+
+```{r setup, include=FALSE}
 library(flexdashboard)
+# Install thematic and un-comment for themed static plots (i.e., ggplot2)
+# thematic::thematic_rmd()
 library(rmarkdown)
 library(htmlTable)
 library(htmltools)
@@ -51,8 +49,6 @@ library(DT)
 library(knitr)
 library(shiny)
 library(dashboardthemes)
-library(shinydashboard)
-library(shinydashboardPlus)
 library(purrr)
 library(fontawesome) # colocar icones nos títulos das abas
 library(rbokeh)
@@ -63,11 +59,9 @@ library(digest)
 library(bit)
 #library(bubbles)
 library(bubblyr)
-
-# library(thematic) # alterar tamática
-
-# bslib::bs_themer() # CUSTOMIZAR O TEMA DO DASHBOARD
-# thematic::thematic_rmd(font = "auto")
+library(dygraphs)
+library(mgcv)
+library(leaflet)
 
 
 # SETEMBRO:
@@ -108,7 +102,7 @@ tramitacao_set$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_set$`TEMPO D
 
 # OUTUBRO:
 tramitacao_out <- read_excel("(PROPLAN) Controle de Processos 2022.xlsx", 
-                             sheet = "OUTUBRO-2022", skip = 2)
+                             sheet = "OUTUBRO-2022", skip = 1)
 
 tramitacao_out$`MES` <- as.factor(10)
 tramitacao_out$`ANO` <- "2022"
@@ -136,7 +130,7 @@ tramitacao_out$`LOCAL DE DESTINO` <- as.factor(tramitacao_out$`LOCAL DE DESTINO`
 
 
 # colocando zero (0) no lugar nos missings de duração no setor, depois alterar para o fechamento do mes:
-tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- Sys.Date()-as.Date(tramitacao_out$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
+tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- as.Date("2022-09-30")-as.Date(tramitacao_out$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
 
 #Sys.Date()
 
@@ -232,114 +226,18 @@ table_periodo <- rename(table_periodo, "setor" = "LOCAL DE ORIGEM")
 
 table_periodo <- table_periodo %>% arrange(setor)
 
-
-```
-
-# ACOMPANHAMENTO {data-icon="fa-table"}
-
-## Colmn {.sidebar}
-
-```{r}
-# agrupar dados em uma tela
-# ACOMPANHAMENTO {data-icon="fa-table" data-navmenu="ANÁLISES"}
-
-#sidebarSearchForm(textId = "searchText", buttonId = "searchButton", label = "Search...", icon = shiny::icon("search"))
-```
-
-```{r}
-selectInput(inputId = "setor",
-            label = "LOCAL DE DESTINO:", 
-            choices = unique(table_periodo$setor),
-            selected = "NA")
-
-sliderInput("dias", "DIAS:", value = 50, min = 0, max = 100)
-
-```
-
-```{r}
+# filtro da aba de "ACOMPANHAMENTO":
 month_list <- as.list(1:12) %>%
   set_names(month.name)
   
 month_list$`All Year` <- 99
 
-selectInput(
-  inputId = "month",
-  label = "Month:",
-  choices = month_list,
-  selected = 99,
-  size = 13,
-  selectize = FALSE
-  )
-```
 
-```{r}
-library(shiny)
-library(flexdashboard)
-
-renderValueBox({
-total <- tramitacao %>% select(MES) %>% filter(input$month == MES)
-
-valueBox(count(total), "Recebidos", 
-         icon = icon("list"), 
-         color = "black")
-  })
-
-```
-
-
-## Colmn {data-width=1000}
-
-### Processos
-```{r}
-renderTable({
-tramitacao %>% filter(`LOCAL DE DESTINO` == input$setor, `TEMPO DO PROCESSO NO SETOR (DIAS)` <= input$dias, `MES` == input$month) %>% 
-    select(`NÚMERO DO PROCESSO (SIPAC/SEI!)`, `LOCAL DE ORIGEM`, `ASSUNTO DETALHADO (SIPAC / SEI!)`, `MOTIVO DO SOBRESTAMENTO`, `TEMPO DE SOBRESTAMENTO (DIAS)`, `DESPACHO / AÇÃO DE ENCAMINHAMENTO (RESUMIDO)`, `LOCAL DE DESTINO`, `TEMPO DO PROCESSO NO SETOR (DIAS)`)
-
-})
-
-#tramitacao_set %>% filter(`LOCAL DE DESTINO` == input$setor, `TEMPO DO PROCESSO NO SETOR (DIAS)` <= input$dias)
-
-```
-
-
-# TODOS OS PROCESSOS {data-icon="fa-table"}
-```{r}
-# agrupar dados em uma tela
-# TODOS OS PROCESSOS {data-icon="fa-table" data-navmenu="ANÁLISES"}
-
-## Colmn {.sidebar}
-
-#sidebarSearchForm(textId = "searchText", buttonId = tramitacao$`LOCAL DE DESTINO`, label = "Search...", icon = shiny::icon("search"))
-```
-
-## Colmn {.sidebar data-width=150}
-```{r}
-## Row {.sidebar data-width=150}
-
+# dados aba "TODOS OS PROCESSOS":
+# encontrar as somas de processos faltantes e os que foi enviados:
 missing <- tramitacao %>% filter(`LOCAL DE DESTINO` == "NA")
 progresso <- tramitacao %>% filter(`LOCAL DE DESTINO` != "NA")
 
-library(shiny)
-library(flexdashboard)
-
-valueBox(count(missing), "Processos à Enviar", icon = icon("credit-card"), color = "red")
-
-valueBox(count(progresso), "Enviados", icon = icon("thumbs-up", lib = "glyphicon"), color = "green")
-
-valueBox(count(tramitacao), "Recebidos", icon = icon("list"), color = "blue")
-
-
-#icon = icon("credit-card"), color = "red"
-
-```
-
-
-## Colmn {data-width=1000}
-```{r}
-## Row {data-width=950}
-
-library(shiny)
-library(DT)
 
 movimentacao <- tramitacao
 
@@ -350,7 +248,81 @@ movimentacao$`DATA DE ENCAMINHAMENTO (SAÍDA)` <- as.character.Date(movimentacao
 movimentacao <- movimentacao %>% 
   select(MES, ANO, `NÚMERO DO PROCESSO (SIPAC/SEI!)`:`TEMPO DO PROCESSO NO SETOR (DIAS)`)
 
+```
 
+# ACOMPANHAMENTO {data-icon="fa-table"}
+
+## Colmn {.sidebar} {data-width=100}
+```{r}
+selectInput(inputId = "setor",
+            label = "Local de Destino:", 
+            choices = unique(table_periodo$setor),
+            selected = "NA")
+
+sliderInput("dias", "Dias:", value = 30, min = 0, max = 60)
+```
+
+```{r}
+selectInput(
+  inputId = "month",
+  label = "Month:",
+  choices = month_list,
+  selected = 99,
+  size = 13,
+  selectize = FALSE
+  )
+```
+
+### Recebidos
+```{r}
+renderValueBox({
+total <- tramitacao %>% 
+  select(MES) %>% 
+  filter(input$month == MES)
+
+valueBox(count(total), 
+         icon = "fa-table", 
+         color = "#3275B8")
+  })
+
+```
+
+
+## Colmn {data-width=1000}
+### Processos
+```{r}
+renderTable({
+tramitacao %>% filter(`LOCAL DE DESTINO` == input$setor, `TEMPO DO PROCESSO NO SETOR (DIAS)` <= input$dias, `MES` == input$month) %>% 
+    select(`NÚMERO DO PROCESSO (SIPAC/SEI!)`, `LOCAL DE ORIGEM`, `ASSUNTO DETALHADO (SIPAC / SEI!)`, `MOTIVO DO SOBRESTAMENTO`, `TEMPO DE SOBRESTAMENTO (DIAS)`, `DESPACHO / AÇÃO DE ENCAMINHAMENTO (RESUMIDO)`, `LOCAL DE DESTINO`, `TEMPO DO PROCESSO NO SETOR (DIAS)`)
+
+})
+
+```
+
+
+# TODOS OS PROCESSOS {data-icon="fa-table"}
+
+## Colmn {.sidebar} {data-width=100}
+### Processos à Enviar 
+```{r}
+valueBox(count(missing), icon = "fa-pencil", color = "#88BBEE")
+
+```
+
+### Enviados
+```{r}
+valueBox(count(progresso), icon = "fa-table", color = "#4095EB")
+
+```
+
+### Recebidos
+```{r}
+valueBox(count(tramitacao), icon = "fa-table", color = "#3275B8")
+```
+
+## Colmn {.tabset data-width=700}
+### Processos
+```{r}
 DT::renderDataTable({
   DT::datatable(movimentacao, 
                 editable = 'cell',
@@ -361,39 +333,45 @@ DT::renderDataTable({
                 ) %>% 
     formatStyle('LOCAL DE DESTINO', color = 'red', fontWeight = 'bold')
 })
-
 ```
 
 
-# FIGURAS {data-table=row data-icon="fa-chart-line"}
-
+### Gráficos
 ```{r}
 # agrupar dados em uma tela
 # FIGURAS {data-table=row data-icon="fa-chart-line" data-navmenu="GRÁFICOS"}
+# # FIGURAS {data-icon="fa-chart-line"} {.tabset}
 
-## Colmn {.sidebar}
-
-#todos <- as.list(1:78) %>% set_names()
-
-#todos$`TODOS` <- 79
-
-#todos <- as.list(todos)
-
-#selectInput(inputId = "processo", label = "PROCESSOS:", choices = unique(todos$`TODOS`), selected = 79, size = 13, selectize = FALSE)
-```
-
-## Colmn {data-width=1000}
-
-### Processos Pendentes
-```{r}
 renderPlotly({
 #tramitacao %>% filter(`NÚMERO DO PROCESSO (SIPAC/SEI!)` == input$processo) %>% 
   
 grafico <- ggplot(tramitacao, 
                   aes(x=`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`, y=`TEMPO DO PROCESSO NO SETOR (DIAS)`, color = `NÚMERO DO PROCESSO (SIPAC/SEI!)`)) + 
-  geom_point()
+  geom_point() +
+  theme(panel.background = element_rect(fill = "#363636"),
+        plot.background = element_rect(fill = "#363636"),
+        text = element_text(color="white"),                # texto do gráfico (tílos ou elementos da legenda)
+        axis.text.x = element_text(color="white"),         # texto os eixos do gráfico
+        axis.text.y  = element_text(color="white"),        # texto do eixo Y do gráfico
+        #title = element_text(color="black"),               # títulos do gráfico
+        legend.title = element_text(color="white"),        # cor da fonte da legenda
+        legend.text = element_text(color="white"),         # cor da fonte da legenda interna. 
+        legend.background = element_rect(fill="#363636"),  # colocar cor de fundo da legenda
+        )
 
 ggplotly(grafico)
 
 })
 ```
+
+
+### Universidade Federal de Sergipe
+
+```{r}
+leaflet() %>%
+  addTiles() %>%
+  addMarkers(lng=-37.099043, lat=-10.925129, popup="PROPLAN")
+
+```
+
+
