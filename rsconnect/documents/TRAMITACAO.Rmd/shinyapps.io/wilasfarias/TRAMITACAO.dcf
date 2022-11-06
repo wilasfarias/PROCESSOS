@@ -5,9 +5,9 @@ account: wilasfarias
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 7270329
-bundleId: 6393539
+bundleId: 6480246
 url: https://wilasfarias.shinyapps.io/TRAMITACAO/
-when: 1665534707.95262
-lastSyncTime: 1665534707.95263
+when: 1667696997.48485
+lastSyncTime: 1667696997.48486
 asMultiple: FALSE
 asStatic: FALSE
