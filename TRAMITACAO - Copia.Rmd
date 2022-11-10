@@ -64,18 +64,17 @@ library(mgcv)
 library(plotly)
 library(leaflet)
 #library(pacman)
-pacman::p_load(rmarkdown,ggplot2,htmlTable,htmltools,markdown,dplyr,tidyr,readr,readxl,DT,knitr,shiny,dashboardthemes,purrr,fontawesome,rbokeh,bslib,plotly,htmlwidgets,digest,bit,bubblyr,dygraphs,mgcv,leaflet)
+# pacman::p_load(rmarkdown,ggplot2,htmlTable,htmltools,markdown,dplyr,tidyr,readr,readxl,DT,knitr,shiny,dashboardthemes,purrr,rbokeh,bslib,plotly,htmlwidgets,digest,bit,bubblyr,dygraphs,mgcv,leaflet)
 
-options(scipen = 999)
+# options(scipen = 999)
 
 # SETEMBRO:
-# importar base de dados
 
 #tramitacao_set1 <- read_excel("(PROPLAN) Controle de Processos 2022.xlsx", sheet = "SETEMBRO-2022", skip = 2)
 
-tramitacao_set <- read.csv('https://raw.githubusercontent.com/wilasfarias/PROCESSOS/main/Processo_2022/PROPLAN_SETEMBRO.csv', sep = ";", fileEncoding = "Latin1", header = TRUE, skip = 2) # "Latin1" ou "UTF-8"
 
-# renomear
+tramitacao_set <- read.csv('https://raw.githubusercontent.com/wilasfarias/PROCESSOS/main/Processo_2022/PROPLAN_SETEMBRO.csv', sep = ";", fileEncoding = "UTF-8", header = TRUE, skip = 2)
+
 tramitacao_set <- rename(tramitacao_set, 
                          "NÚMERO DO PROCESSO (SIPAC/SEI!)" = "NÚMERO.DO.PROCESSO..SIPAC.SEI..",
                          "DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)" = "DATA.DE.ENTRADA..RECEBIMENTO.OU.ABERTURA.",
@@ -93,7 +92,7 @@ tramitacao_set <- rename(tramitacao_set,
                          "TEMPO DO PROCESSO NO SETOR (DIAS)" = "TEMPO.DO.PROCESSO.NO.SETOR..DIAS."
 )
 
-# alterar classe das colunas
+
 tramitacao_set$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)` <- as.Date(tramitacao_set$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`, '%d/%m/%Y')
 
 tramitacao_set$`DATA DE ENCAMINHAMENTO (SAÍDA)` <- as.Date(tramitacao_set$`DATA DE ENCAMINHAMENTO (SAÍDA)`, '%d/%m/%Y')
@@ -102,59 +101,51 @@ tramitacao_set$`DATA DE ENCAMINHAMENTO (SAÍDA)` <- as.Date(tramitacao_set$`DATA
 tramitacao_set <- tramitacao_set[!is.na(tramitacao_set[,1]),]
 tramitacao_set <- tramitacao_set[!is.na(tramitacao_set[,2]),]
 
-# alterar classe da coluna
 tramitacao_set$`TEMPO DE SOBRESTAMENTO (DIAS)` <- as.double(tramitacao_set$`TEMPO DE SOBRESTAMENTO (DIAS)`)
 
 tramitacao_set$`TEMPO DO PROCESSO NO SETOR (DIAS)` <- as.double(tramitacao_set$`TEMPO DO PROCESSO NO SETOR (DIAS)`)
 
-# colocando zero (0) no lugar nos missings no tempo de sobrestamento:
-tramitacao_set$`TEMPO DE SOBRESTAMENTO (DIAS)`[is.na(tramitacao_set$`TEMPO DE SOBRESTAMENTO (DIAS)`)] <- 0
-
-# colocar a data de hoje nos dados missing
-tramitacao_set$`DATA DE ENCAMINHAMENTO (SAÍDA)`[is.na(tramitacao_set$`DATA DE ENCAMINHAMENTO (SAÍDA)`)] <- Sys.Date()
-
-# criar mes e ano
 tramitacao_set$`MES` <- as.factor(9)
 tramitacao_set$`ANO` <- "2022"
 
 tramitacao_set <- as.data.frame(tramitacao_set)
 
-# alterar classe da coluna
 tramitacao_set[,1] <- as.factor(tramitacao_set[,1])
 tramitacao_set[,13] <- as.factor(tramitacao_set[,13])
 
 tramitacao_set[,14] <- difftime(tramitacao_set[,10], as.Date(tramitacao_set[,2]), units = "days")-tramitacao_set[,9]
 
-# ordenar dados
-tramitacao_set <- tramitacao_set %>% arrange(tramitacao_set[,2], tramitacao_set[,1])
+tramitacao_set <- tramitacao_set %>% arrange(tramitacao_set, tramitacao_set[,14])
+
 
 #tramitacao_set <- select(tramitacao_set, "MES", "ANO", `NÚMERO DO PROCESSO (SIPAC/SEI!)`:`TEMPO DO PROCESSO NO SETOR (DIAS)`)
 
-# colocando "NAs" nos dados faltantes de destino:
+
+# colocando NAs nos dados faltantes de destino:
 tramitacao_set$`LOCAL DE DESTINO` <- as.character(tramitacao_set$`LOCAL DE DESTINO`)
 
 tramitacao_set$`LOCAL DE DESTINO`[is.na(tramitacao_set$`LOCAL DE DESTINO`)] <- "NA"
 
+
 tramitacao_set$`LOCAL DE DESTINO`[tramitacao_set$`LOCAL DE DESTINO` == ""] <- "NA"
+
 
 tramitacao_set$`LOCAL DE DESTINO` <- as.factor(tramitacao_set$`LOCAL DE DESTINO`)
 
+
 # colocando zero (0) no lugar nos missings de duração no setor:
-#tramitacao_set$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_set$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- as.Date("2022-09-30")-as.Date(tramitacao_set$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
+tramitacao_set$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_set$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- as.Date("2022-09-30")-as.Date(tramitacao_set$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
 
 #glimpse(tramitacao_set)
 #----------------------------------------------------------------------------#
 
 # OUTUBRO:
-# importar base de dados
 
 #tramitacao_out <- read_excel("(PROPLAN) Controle de Processos 2022.xlsx", sheet = "OUTUBRO-2022", skip = 2)
 
-#tramitacao_out <- read.csv('https://raw.githubusercontent.com/wilasfarias/PROCESSOS/main/Processo_2022/PROPLAN_OUTUBRO.csv', sep = ";", fileEncoding = "UTF-8", header = TRUE)
 
-tramitacao_out <- read.csv('https://raw.githubusercontent.com/wilasfarias/PROCESSOS/main/Processo_2022/PROPLAN_OUTUBRO.csv', sep = ";", fileEncoding = "Latin1", header = TRUE, skip = 1) # "Latin1" ou "UTF-8"
+tramitacao_out <- read.csv('https://raw.githubusercontent.com/wilasfarias/PROCESSOS/main/Processo_2022/PROPLAN_OUTUBRO.csv', sep = ";", fileEncoding = "UTF-8", header = TRUE)
 
-# renomear
 tramitacao_out <- rename(tramitacao_out, 
                          "NÚMERO DO PROCESSO (SIPAC/SEI!)" = "NÚMERO.DO.PROCESSO..SIPAC.SEI..",
                          "DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)" = "DATA.DE.ENTRADA..RECEBIMENTO.OU.ABERTURA.",
@@ -172,7 +163,7 @@ tramitacao_out <- rename(tramitacao_out,
                          "TEMPO DO PROCESSO NO SETOR (DIAS)" = "TEMPO.DO.PROCESSO.NO.SETOR..DIAS."
 )
 
-# alterar classe das colunas
+
 tramitacao_out$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)` <- as.Date(tramitacao_out$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`, '%d/%m/%Y')
 
 tramitacao_out$`DATA DE ENCAMINHAMENTO (SAÍDA)` <- as.Date(tramitacao_out$`DATA DE ENCAMINHAMENTO (SAÍDA)`, '%d/%m/%Y')
@@ -181,33 +172,26 @@ tramitacao_out$`DATA DE ENCAMINHAMENTO (SAÍDA)` <- as.Date(tramitacao_out$`DATA
 tramitacao_out <- tramitacao_out[!is.na(tramitacao_out[,1]),]
 tramitacao_out <- tramitacao_out[!is.na(tramitacao_out[,2]),]
 
-# alterar classe das colunas
 tramitacao_out$`TEMPO DE SOBRESTAMENTO (DIAS)` <- as.double(tramitacao_out$`TEMPO DE SOBRESTAMENTO (DIAS)`)
 
 tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)` <- as.double(tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`)
 
-# colocando zero (0) no lugar nos missings no tempo de sobrestamento:
-tramitacao_out$`TEMPO DE SOBRESTAMENTO (DIAS)`[is.na(tramitacao_out$`TEMPO DE SOBRESTAMENTO (DIAS)`)] <- 0
 
-# colocar a dta de hoje nos dados missing
-tramitacao_out$`DATA DE ENCAMINHAMENTO (SAÍDA)`[is.na(tramitacao_out$`DATA DE ENCAMINHAMENTO (SAÍDA)`)] <- Sys.Date()
-
-# criar mes e ano
 tramitacao_out$`MES` <- as.factor(10)
 tramitacao_out$`ANO` <- "2022"
 
 tramitacao_out <- as.data.frame(tramitacao_out)
 
-# alterar classe das colunas
 tramitacao_out[,1] <- as.factor(tramitacao_out[,1])
 tramitacao_out[,13] <- as.factor(tramitacao_out[,13])
 
 tramitacao_out[,14] <- difftime(tramitacao_out[,10], as.Date(tramitacao_out[,2]), units = "days")-tramitacao_out[,9]
 
-# ordenar dados
-tramitacao_out <- tramitacao_out %>% arrange(tramitacao_out[,2], tramitacao_out[,1])
+tramitacao_out <- tramitacao_out %>% arrange(tramitacao_out, tramitacao_out[,14])
+
 
 #tramitacao_out <- select(tramitacao_out, "MES", "ANO", `NÚMERO DO PROCESSO (SIPAC/SEI!)`:`TEMPO DO PROCESSO NO SETOR (DIAS)`)
+
 
 # colocando NAs nos dados faltantes de destino:
 tramitacao_out$`LOCAL DE DESTINO` <- as.character(tramitacao_out$`LOCAL DE DESTINO`)
@@ -218,12 +202,14 @@ tramitacao_out$`LOCAL DE DESTINO`[tramitacao_out$`LOCAL DE DESTINO` == ""] <- "N
 
 tramitacao_out$`LOCAL DE DESTINO` <- as.factor(tramitacao_out$`LOCAL DE DESTINO`)
 
+
 # colocando zero (0) no lugar nos missings de duração no setor:
-#tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- as.Date("2022-10-31")-as.Date(tramitacao_out$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
+tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_out$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- as.Date("2022-10-31")-as.Date(tramitacao_out$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
 
 #glimpse(tramitacao_out)
 
 #Sys.Date()
+
 
 #------------------------------------------------------------------------------------#
 
@@ -231,11 +217,9 @@ tramitacao_out$`LOCAL DE DESTINO` <- as.factor(tramitacao_out$`LOCAL DE DESTINO`
 
 #tramitacao_nov <- read_excel("(PROPLAN) Controle de Processos 2022.xlsx", sheet = "NOVEMBRO-2022", skip = 2)
 
-#tramitacao_nov <- read.csv('https://raw.githubusercontent.com/wilasfarias/PROCESSOS/main/Processo_2022/PROPLAN_NOVEMBRO.csv', sep = ";", fileEncoding = "UTF-8", header = TRUE, skip = 2)
 
-tramitacao_nov <- read.csv('https://raw.githubusercontent.com/wilasfarias/PROCESSOS/main/Processo_2022/PROPLAN_NOVEMBRO.csv', sep = ";", fileEncoding = "Latin1", header = TRUE, skip = 2) # "Latin1" ou "UTF-8"
+tramitacao_nov <- read.csv('https://raw.githubusercontent.com/wilasfarias/PROCESSOS/main/Processo_2022/PROPLAN_NOVEMBRO.csv', sep = ";", fileEncoding = "UTF-8", header = TRUE, skip = 2)
 
-# renomear
 tramitacao_nov <- rename(tramitacao_nov, 
                          "NÚMERO DO PROCESSO (SIPAC/SEI!)" = "NÚMERO.DO.PROCESSO..SIPAC.SEI..",
                          "DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)" = "DATA.DE.ENTRADA..RECEBIMENTO.OU.ABERTURA.",
@@ -253,7 +237,7 @@ tramitacao_nov <- rename(tramitacao_nov,
                          "TEMPO DO PROCESSO NO SETOR (DIAS)" = "TEMPO.DO.PROCESSO.NO.SETOR..DIAS."
 )
 
-# alterar classe das colunas
+
 tramitacao_nov$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)` <- as.Date(tramitacao_nov$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`, '%d/%m/%Y')
 
 tramitacao_nov$`DATA DE ENCAMINHAMENTO (SAÍDA)` <- as.Date(tramitacao_nov$`DATA DE ENCAMINHAMENTO (SAÍDA)`, '%d/%m/%Y')
@@ -266,13 +250,7 @@ tramitacao_nov$`TEMPO DE SOBRESTAMENTO (DIAS)` <- as.double(tramitacao_nov$`TEMP
 
 tramitacao_nov$`TEMPO DO PROCESSO NO SETOR (DIAS)` <- as.double(tramitacao_nov$`TEMPO DO PROCESSO NO SETOR (DIAS)`)
 
-# colocando zero (0) no lugar nos missings no tempo de sobrestamento:
-tramitacao_nov$`TEMPO DE SOBRESTAMENTO (DIAS)`[is.na(tramitacao_nov$`TEMPO DE SOBRESTAMENTO (DIAS)`)] <- 0
 
-# colocar a dta de hoje nos dados missing
-tramitacao_nov$`DATA DE ENCAMINHAMENTO (SAÍDA)`[is.na(tramitacao_nov$`DATA DE ENCAMINHAMENTO (SAÍDA)`)] <- Sys.Date()
-
-# criar mes e ano
 tramitacao_nov$`MES` <- as.factor(11)
 tramitacao_nov$`ANO` <- "2022"
 
@@ -283,10 +261,11 @@ tramitacao_nov[,13] <- as.factor(tramitacao_nov[,13])
 
 tramitacao_nov[,14] <- difftime(tramitacao_nov[,10], as.Date(tramitacao_nov[,2]), units = "days")-tramitacao_nov[,9]
 
-# ordenar dados
-tramitacao_nov <- tramitacao_nov %>% arrange(tramitacao_nov[,2], tramitacao_nov[,1])
+tramitacao_nov <- tramitacao_nov %>% arrange(tramitacao_nov, tramitacao_nov[,14])
+
 
 #tramitacao_nov <- select(tramitacao_nov, "MES", "ANO", `NÚMERO DO PROCESSO (SIPAC/SEI!)`:`TEMPO DO PROCESSO NO SETOR (DIAS)`)
+
 
 # colocando NAs nos dados faltantes de destino:
 tramitacao_nov$`LOCAL DE DESTINO` <- as.character(tramitacao_nov$`LOCAL DE DESTINO`)
@@ -299,7 +278,7 @@ tramitacao_nov$`LOCAL DE DESTINO` <- as.factor(tramitacao_nov$`LOCAL DE DESTINO`
 tramitacao_nov$`MOTIVO DO SOBRESTAMENTO` <- as.character(tramitacao_nov$`MOTIVO DO SOBRESTAMENTO`)
 
 # colocando zero (0) no lugar nos missings de duração no setor, depois alterar para o fechamento do mes:
-#tramitacao_nov$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_nov$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- Sys.Date()-as.Date(tramitacao_nov$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
+tramitacao_nov$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_nov$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- Sys.Date()-as.Date(tramitacao_nov$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
 
 # Sys.Date()
 # as.Date("2022-11-30")
@@ -314,7 +293,7 @@ tramitacao_nov$`MOTIVO DO SOBRESTAMENTO` <- as.character(tramitacao_nov$`MOTIVO 
 
 tramitacao_dez <- read.csv('https://raw.githubusercontent.com/wilasfarias/PROCESSOS/main/Processo_2022/PROPLAN_DEZEMBRO.csv',
                            sep = ";", 
-                           fileEncoding = "Latin1", # "Latin1", "UTF-8"
+                           fileEncoding = "Latin1", # "UTF-8", 
                            fill = TRUE,
                            header = TRUE, 
                            skip = 2)
@@ -336,41 +315,35 @@ tramitacao_dez <- rename(tramitacao_dez,
                          "TEMPO DO PROCESSO NO SETOR (DIAS)" = "TEMPO.DO.PROCESSO.NO.SETOR..DIAS."
 )
 
-# renomear
+
 tramitacao_dez$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)` <- as.Date(tramitacao_dez$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`, '%d/%m/%Y')
 
 tramitacao_dez$`DATA DE ENCAMINHAMENTO (SAÍDA)` <- as.Date(tramitacao_dez$`DATA DE ENCAMINHAMENTO (SAÍDA)`, '%d/%m/%Y')
 
-# colocando zero (0) no lugar nos missings no tempo de sobrestamento:
-tramitacao_dez$`TEMPO DE SOBRESTAMENTO (DIAS)`[is.na(tramitacao_dez$`TEMPO DE SOBRESTAMENTO (DIAS)`)] <- 0
-
-# colocar a dta de hoje nos dados missing
-tramitacao_dez$`DATA DE ENCAMINHAMENTO (SAÍDA)`[is.na(tramitacao_dez$`DATA DE ENCAMINHAMENTO (SAÍDA)`)] <- Sys.Date()
-
-# criar mes e ano
+# ativar assim que o mês for utilizado
 tramitacao_dez$`MES` <- as.factor(12)
 tramitacao_dez$`ANO` <- "2022"
-
-tramitacao_dez <- as.data.frame(tramitacao_dez)
 
 # eliminar dados missing
 tramitacao_dez <- tramitacao_dez[!is.na(tramitacao_dez[,1]),]
 tramitacao_dez <- tramitacao_dez[!is.na(tramitacao_dez[,2]),]
 
-# alterar classe da coluna
 tramitacao_dez$`TEMPO DE SOBRESTAMENTO (DIAS)` <- as.double(tramitacao_dez$`TEMPO DE SOBRESTAMENTO (DIAS)`)
 
 tramitacao_dez$`TEMPO DO PROCESSO NO SETOR (DIAS)` <- as.double(tramitacao_dez$`TEMPO DO PROCESSO NO SETOR (DIAS)`)
+
+tramitacao_dez <- as.data.frame(tramitacao_dez)
 
 tramitacao_dez[,1] <- as.factor(tramitacao_dez[,1])
 tramitacao_dez[,13] <- as.factor(tramitacao_dez[,13])
 
 tramitacao_dez[,14] <- difftime(tramitacao_dez[,10], as.Date(tramitacao_dez[,2]), units = "days")-tramitacao_dez[,9]
 
-# ordenar dados
-tramitacao_dez <- tramitacao_dez %>% arrange(tramitacao_dez[,2], tramitacao_dez[,1])
+tramitacao_dez <- tramitacao_dez %>% arrange(tramitacao_dez, tramitacao_dez[,14])
+
 
 #tramitacao_dez <- select(tramitacao_dez, "MES", "ANO", `NÚMERO DO PROCESSO (SIPAC/SEI!)`:`TEMPO DO PROCESSO NO SETOR (DIAS)`)
+
 
 # colocando NAs nos dados faltantes de destino:
 tramitacao_dez$`LOCAL DE DESTINO` <- as.character(tramitacao_dez$`LOCAL DE DESTINO`)
@@ -381,8 +354,9 @@ tramitacao_dez$`LOCAL DE DESTINO`[tramitacao_dez$`LOCAL DE DESTINO` == ""] <- "N
 
 tramitacao_dez$`LOCAL DE DESTINO` <- as.factor(tramitacao_dez$`LOCAL DE DESTINO`)
 
+
 # colocando zero (0) no lugar nos missings de duração no setor, depois alterar para o fechamento do mes:
-#tramitacao_dez$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_dez$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- Sys.Date()-as.Date(tramitacao_dez$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
+tramitacao_dez$`TEMPO DO PROCESSO NO SETOR (DIAS)`[is.na(tramitacao_dez$`TEMPO DO PROCESSO NO SETOR (DIAS)`)] <- Sys.Date()-as.Date(tramitacao_dez$`DATA DE ENTRADA (RECEBIMENTO OU ABERTURA)`)
 
 # Sys.Date()
 # as.Date("2022-12-31"
@@ -420,10 +394,12 @@ month_list <- as.list(1:12) %>%
   
 month_list$`All Year` <- 99
 
+
 # dados aba "TODOS OS PROCESSOS":
 # encontrar as somas de processos faltantes e os que foi enviados:
 missing <- tramitacao %>% filter(`LOCAL DE DESTINO` == "NA")
 progresso <- tramitacao %>% filter(`LOCAL DE DESTINO` != "NA")
+
 
 movimentacao <- tramitacao
 
@@ -445,7 +421,7 @@ selectInput(inputId = "setor",
             choices = unique(table_periodo$setor),
             selected = "NA")
 
-sliderInput("dias", "Dias:", value = 100, min = 0, max = 100)
+sliderInput("dias", "Dias:", value = 30, min = 0, max = 60)
 ```
 
 ```{r}
@@ -556,7 +532,7 @@ ggplotly(grafico)
 ```{r}
 leaflet() %>%
   addTiles() %>%
-  addMarkers(lng=-37.100809, lat=-10.924881, popup="PROPLAN")
+  addMarkers(lng=-37.099043, lat=-10.925129, popup="PROPLAN")
 
 ```
 
